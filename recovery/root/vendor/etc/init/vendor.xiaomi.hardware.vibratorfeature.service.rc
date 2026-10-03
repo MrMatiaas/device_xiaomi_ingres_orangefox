@@ -41,11 +41,12 @@ on fs
     chown system system /sys/bus/i2c/drivers/awinic_haptic/5-005a/custom_wave
     chown system system /sys/bus/i2c/drivers/awinic_haptic/6-005a/custom_wave
 
-on boot
-    start vibratorfeature-hal-service
+# on boot
+#     start vibratorfeature-hal-service
 
 service vibratorfeature-hal-service /vendor/bin/hw/vendor.xiaomi.hardware.vibratorfeature.service
     class hal
     user root
     group root system input
+    disabled
     seclabel u:r:recovery:s0

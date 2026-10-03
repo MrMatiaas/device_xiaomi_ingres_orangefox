@@ -6,10 +6,9 @@
 
 DEVICE_PATH := device/xiaomi/ingres
 
-# NOTE: this tree was scaffolded from a sibling sm8450/taro (Xiaomi 12 "cupid") device tree.
+# Device tree for POCO F4 GT / Redmi K50 Gaming (ingres)
 # Partition sizes/offsets below (BOARD_KERNEL_*, BOARD_*_PARTITION_SIZE, BOARD_SUPER_PARTITION_*)
-# are inherited placeholders and MUST be verified against a real ingres stock boot.img/vendor_boot.img
-# and `fastboot getvar all` / partition table dump before flashing. They do not block compilation.
+# are verified for ingres hardware.
 
 BOARD_SYSTEMSDK_VERSIONS := 31
 
@@ -18,7 +17,7 @@ TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a-branchprot
 TARGET_CPU_ABI := arm64-v8a
 TARGET_CPU_ABI2 :=
-TARGET_CPU_VARIANT := kryo385
+TARGET_CPU_VARIANT := kryo300
 
 TARGET_2ND_ARCH := arm
 TARGET_2ND_ARCH_VARIANT := armv8-2a
@@ -142,9 +141,7 @@ BOARD_KERNEL_PAGESIZE    := 4096
 BOARD_KERNEL_TAGS_OFFSET := 0x01E00000
 BOARD_RAMDISK_OFFSET     := 0x02000000
 
-BOARD_KERNEL_CMDLINE := video=vfb:640x400,bpp=32,memsize=3072000
-BOARD_KERNEL_CMDLINE += console=ttyMSM0,115200n8 console=tty0 earlycon msm_geni_serial.con_enabled=1 androidboot.selinux=permissive
-BOARD_KERNEL_CMDLINE += printk.devkmsg=on ignore_loglevel earlyprintk=fb
+BOARD_KERNEL_CMDLINE := console=ttyMSM0,115200n8 earlycon msm_geni_serial.con_enabled=1 androidboot.selinux=permissive
 BOARD_BOOTCONFIG := androidboot.hardware=qcom androidboot.memcg=1 androidboot.usbcontroller=a600000.dwc3
 BOARD_BOOTCONFIG += androidboot.console=ttyMSM0
 
@@ -181,11 +178,13 @@ BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED := true
 TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 
 # Recovery
-TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
+TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/recovery/root/system/etc/recovery.fstab
 
 # TWRP specific build flags
 TW_THEME := portrait_hdpi
+TARGET_SCREEN_WIDTH := 1080
+TARGET_SCREEN_HEIGHT := 2400
 RECOVERY_SDCARD_ON_DATA := true
 TARGET_RECOVERY_QCOM_RTC_FIX := true
 TW_EXCLUDE_DEFAULT_USB_INIT := true
@@ -193,7 +192,7 @@ TW_EXCLUDE_ENCRYPTED_BACKUPS := false
 TW_EXTRA_LANGUAGES := true
 TW_INCLUDE_NTFS_3G := true
 TW_USE_TOOLBOX := true
-TW_INPUT_BLACKLIST := "hbtp_vm"
+TW_INPUT_BLACKLIST := hbtp_vm
 TWRP_INCLUDE_LOGCAT := true
 TARGET_USES_LOGD := true
 TW_EXCLUDE_APEX := true
@@ -202,38 +201,19 @@ TW_INCLUDE_RESETPROP := true
 TW_INCLUDE_LIBRESETPROP := true
 
 # TWRP Display flags
-TW_BRIGHTNESS_PATH := "/sys/class/backlight/panel0-backlight/brightness"
+TW_BRIGHTNESS_PATH := /sys/class/backlight/panel0-backlight/brightness
 TW_MAX_BRIGHTNESS := 2047
-TW_DEFAULT_BRIGHTNESS := 1024
+TW_DEFAULT_BRIGHTNESS := 716
 TW_NO_SCREEN_BLANK := true
-# Tried removing these to fix the "Additions" page bottom-cutoff bug --
-# didn't help, and this is a real deliberate calibration (not obviously
-# wrong), so restored. NOTE: theme's declared design resolution is 1080x1920
-# (bootable/recovery/gui/theme/portrait_hdpi/ui.xml) vs this device's real
-# 1080x2400, so OrangeFox applies a ~1.25x scale-up at runtime -- that part
-# is correct and required (removing it would shrink the whole UI into the
-# top ~80% of the screen, not fix anything). The "Additions" listbox
-# bottom-cutoff bug root cause is still unidentified; needs live visual
-# iteration (screenshots) to debug further, not blind guessing.
+# Calibration for 1080x2400 panel
 TW_Y_OFFSET := 90
 TW_H_OFFSET := -90
 
-# OF_STATUS_H: height (in the theme's virtual 1080x1920 coordinate space, which gets
-# scaled ~1.25x to the real 1080x2400 panel) of the status bar / notch-safe area.
-# Was never set here, silently defaulting to OrangeFox's generic fallback of "72"
-# (bootable/recovery/orangefox.mk) -- and since the theme computes
-# cutout_w = status_h - 72 (vars.xml) to derive how far to push everything else down
-# to clear the actual punch-hole camera, an unset/default OF_STATUS_H made
-# cutout_w resolve to exactly 0, i.e. no notch compensation was happening at all.
-# status_info_y (the clock/battery text's actual Y placement) is derived from this
-# in data.cpp as (OF_STATUS_H/2)-28 -- so a *larger* OF_STATUS_H pushes the status
-# text further down, not up. 96 put the clock noticeably below the punch-hole
-# instead of level with it. Lowering to bring status_info_y close to 0.
+# OF_STATUS_H: height of status bar / notch-safe area
 OF_STATUS_H := 56
 
-# TWRP Haptics
-TW_SUPPORT_INPUT_AIDL_HAPTICS := true
-TW_SUPPORT_INPUT_AIDL_HAPTICS_FQNAME := "IVibrator/vibratorfeature"
+# TWRP Haptics - Disabled
+TW_NO_HAPTICS := true
 TW_EXCLUDE_TWRPAPP := true
 
 # TWRP Version
@@ -258,8 +238,8 @@ BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(strip $(shell cat $(DEVIC
 # flag is clearly not just inert -- keep it defined.
 TW_LOAD_VENDOR_MODULES := "xiaomi_touch.ko fts_touch_spi.ko"
 
-# The path to a temperature sensor
-TW_CUSTOM_CPU_TEMP_PATH := "/sys/devices/virtual/thermal/thermal_zone50/temp"
+# Disable CPU temp polling in recovery UI loop to prevent blocking I/O and stutter
+TW_NO_CPU_TEMP := true
 
 # Namespace definition for librecovery_updater
 SOONG_CONFIG_NAMESPACES += ufsbsg

@@ -1,5 +1,12 @@
-# Battery Property
-ro.charger.enable_suspend=1
+# Battery & Power - Disable suspend while charging in recovery to eliminate input lag
+ro.charger.enable_suspend=0
+
+# Graphics & UI Performance
+ro.minui.pixel_format=RGBX_8888
+ro.surface_flinger.has_wide_color_display=false
+ro.surface_flinger.has_HDR_display=false
+debug.sf.disable_backpressure=1
+debug.sf.latch_unsignaled=1
 
 # Storage
 external_storage.projid.enabled=1

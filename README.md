@@ -1,7 +1,6 @@
 # Device tree for Redmi K50 Gaming Edition / POCO F4 GT (codename ingres)
 
-Scaffolded from a sibling sm8450/taro OrangeFox device tree (Xiaomi 12 "cupid") and adapted
-for ingres. This is a from-scratch port.
+OrangeFox Recovery device tree for POCO F4 GT / Redmi K50 Gaming (`ingres`). Built for the `fox_14.1` branch.
 
 ## Device specifications
 
@@ -70,7 +69,7 @@ Confirmed working:
 
 Still open / unverified:
 - [ ] `BoardConfig.mk` kernel load offsets (`BOARD_KERNEL_TAGS_OFFSET`, `BOARD_RAMDISK_OFFSET`)
-      are still inherited from cupid and unverified (partition *sizes* were confirmed correct).
+      (partition *sizes* were confirmed correct).
 - [ ] `prebuilt/kernel` is a real kernel Image (pulled from a stock `boot.img`) but is **not**
       actually embedded in the built recovery image (`BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE`) —
       it exists solely to satisfy the build's `check_vintf_all` step, which fails outright

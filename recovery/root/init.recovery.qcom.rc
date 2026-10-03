@@ -28,14 +28,20 @@
 import /init.recovery.qcom_decrypt.rc
 
 on init
-    write /sys/class/backlight/panel0-backlight/brightness 200
+    write /sys/class/backlight/panel0-backlight/brightness 716
     setprop sys.usb.configfs 1
+    # Enable all CPU cores
+    write /sys/devices/system/cpu/cpu0/online 1
+    write /sys/devices/system/cpu/cpu1/online 1
+    write /sys/devices/system/cpu/cpu2/online 1
+    write /sys/devices/system/cpu/cpu3/online 1
+    write /sys/devices/system/cpu/cpu4/online 1
+    write /sys/devices/system/cpu/cpu5/online 1
+    write /sys/devices/system/cpu/cpu6/online 1
+    write /sys/devices/system/cpu/cpu7/online 1
 
 on fs
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
-    # TODO(ingres): haptic driver chown/chmod rules were dropped here - cupid's were for its
-    # own aw8697 i2c addresses, unverified for ingres. Re-add once the real driver/i2c path
-    # for ingres's haptic motor is known (check /sys/bus/i2c/drivers/ on a booted device).
     wait /dev/block/platform/soc/${ro.boot.bootdevice}
     symlink /dev/block/platform/soc/${ro.boot.bootdevice} /dev/block/bootdevice
     write /proc/sys/kernel/firmware_config/force_sysfs_fallback 1
@@ -45,21 +51,32 @@ on fs
     chown system system /dev/ion
     install_keyring
 
+on boot
+    # Performance governor and frequency floors to eliminate UI/touch rendering lag
+    write /sys/devices/system/cpu/cpu0/online 1
+    write /sys/devices/system/cpu/cpu4/online 1
+    write /sys/devices/system/cpu/cpu7/online 1
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor performance
+    write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor performance
+    write /sys/devices/system/cpu/cpu7/cpufreq/scaling_governor performance
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 1056000
+    write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 1324800
+
 on property:twrp.modules.loaded=true
-    start touch_report
-    start touchsensor
     # Mount firmware
     mkdir /firmware
     mount vfat /dev/block/bootdevice/by-name/modem${ro.boot.slot_suffix} /firmware ro
     # Load ADSP firmware for PMIC (battery/charger registers via PMIC glink, hosted on
-    # the ADSP). /sys/kernel/boot_adsp/boot is a normal-boot-only vendor init.qti.write.sh
-    # wrapper that doesn't exist in recovery's ramdisk; use the standard remoteproc sysfs
-    # control instead. adsp.mdt + segments get found via the ueventd firmware fallback
-    # search, which includes /firmware/image (the modem partition mounted just above).
+    # the ADSP). Standard remoteproc sysfs control.
     write /sys/class/remoteproc/remoteproc0/state start
-    wait /sys/class/power_supply/battery
+    wait /sys/class/power_supply/battery 2
     start health-hal-2-1
     umount /firmware
+    # Re-apply CPU performance tuning after module load
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor performance
+    write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor performance
+    write /sys/devices/system/cpu/cpu7/cpufreq/scaling_governor performance
+    write /sys/class/backlight/panel0-backlight/brightness 716
 
 
 

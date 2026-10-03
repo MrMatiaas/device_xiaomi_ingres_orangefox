@@ -1,0 +1,90 @@
+name: Build OrangeFox Recovery (ingres)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'PRD.md'
+      - '.gitignore'
+
+jobs:
+  build:
+    name: Build OrangeFox fox_14.1 for POCO F4 GT (ingres)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Device Tree
+        uses: actions/checkout@v4
+        with:
+          path: device_tree
+
+      - name: Free Disk Space
+        run: |
+          echo "Freeing disk space..."
+          sudo rm -rf /usr/share/dotnet /etc/mysql /var/lib/mysql /usr/local/lib/android /opt/ghc /usr/share/swift
+          sudo docker image prune -a -f || true
+          df -h
+
+      - name: Setup Build Environment & Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-core gnupg flex bison build-essential zip curl zlib1g-dev \
+            libc6-dev-i386 libncurses5 libncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev \
+            libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig python3 python-is-python3 \
+            rsync bc libssl-dev openjdk-11-jdk patch schedtool
+          
+          # Install repo tool
+          sudo curl -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
+          sudo chmod a+rx /usr/local/bin/repo
+          
+          # Git config for repo sync
+          git config --global user.name "Bymeopen"
+          git config --global user.email "byme.openwrt@gmail.com"
+
+      - name: Sync OrangeFox Source (fox_14.1)
+        run: |
+          git clone https://github.com/Just-TWRP/OrangeFox_sync.git $HOME/OrangeFox_sync
+          cd $HOME/OrangeFox_sync
+          ./orangefox_sync.sh --branch 14.1 --path $HOME/fox_14.1
+
+      - name: Place Device Tree
+        run: |
+          mkdir -p $HOME/fox_14.1/device/xiaomi/ingres
+          cp -rf device_tree/* $HOME/fox_14.1/device/xiaomi/ingres/
+          rm -rf $HOME/fox_14.1/device/xiaomi/ingres/.git
+
+      - name: Compile OrangeFox Recovery
+        run: |
+          cd $HOME/fox_14.1
+          source build/envsetup.sh
+          export ALLOW_MISSING_DEPENDENCIES=true
+          export LC_ALL="C"
+          lunch twrp_ingres-ap2a-eng
+          mka adbd recoveryimage -j$(nproc --all)
+
+      - name: Collect Recovery Artifacts
+        id: collect
+        run: |
+          mkdir -p artifacts
+          OUT_DIR="$HOME/fox_14.1/out/target/product/ingres"
+          
+          if [ -f "$OUT_DIR/recovery.img" ]; then
+            cp -v "$OUT_DIR/recovery.img" artifacts/recovery-ingres.img
+          fi
+          
+          find "$OUT_DIR" -maxdepth 2 -name "OrangeFox*.zip" -exec cp -v {} artifacts/ \; || true
+          find "$OUT_DIR" -maxdepth 2 -name "*.img" -exec cp -v {} artifacts/ \; || true
+          
+          cd artifacts
+          sha256sum * > SHA256SUMS.txt || true
+          ls -la
+
+      - name: Upload Recovery Artifacts (Non-Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: OrangeFox-Recovery-ingres-non-release
+          path: artifacts/*
+          if-no-files-found: warn
+          retention-days: 7
