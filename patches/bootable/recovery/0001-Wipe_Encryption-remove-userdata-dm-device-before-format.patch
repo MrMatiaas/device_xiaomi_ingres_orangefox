@@ -1,0 +1,33 @@
+diff --git a/partition.cpp b/partition.cpp
+index e899254f..22022efe 100644
+--- a/partition.cpp
++++ b/partition.cpp
+@@ -38,6 +38,7 @@
+ #include <sstream>
+ #include <android-base/properties.h>
+ #include <libsnapshot/snapshot.h>
++#include <fs_mgr_dm_linear.h>
+ 
+ #include "cutils/properties.h"
+ #include "libblkid/include/blkid.h"
+@@ -2264,10 +2265,16 @@ bool TWPartition::Wipe_Encryption() {
+ #ifdef TW_INCLUDE_CRYPTO
+ 	if (!UnMount(true))
+ 		return false;
+-	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
+-//		if (delete_crypto_blk_dev((char*)("userdata")) != 0) {
+-//			LOGERR("Error deleting crypto block device, continuing anyway.\n");
+-//		}
++	// Metadata encryption (FBE + dm-default-key): the "userdata" dm device sits on
++	// top of the raw block device and keeps it open, so make_f2fs/mke2fs on the raw
++	// device fails with "In use by the system!". Tear it down before formatting.
++	// Not gated on Is_Decrypted: the dm device exists as soon as the metadata key is
++	// unwrapped, even if the user never entered their CE password.
++	if (Mount_Point == "/data" && TWFunc::Path_Exists("/dev/block/mapper/userdata")) {
++		if (android::fs_mgr::DestroyLogicalPartition("userdata"))
++			LOGINFO("Wipe_Encryption: removed dm device 'userdata'\n");
++		else
++			LOGERR("Unable to remove dm device 'userdata', format will likely fail.\n");
+ 	}
+ #endif
+ 	Has_Data_Media = false;

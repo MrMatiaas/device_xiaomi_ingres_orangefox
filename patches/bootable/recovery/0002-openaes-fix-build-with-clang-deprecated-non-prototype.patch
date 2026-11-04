@@ -1,0 +1,29 @@
+diff --git a/openaes/Android.mk b/openaes/Android.mk
+index 7c6b5bd4..9c69f8db 100644
+--- a/openaes/Android.mk
++++ b/openaes/Android.mk
+@@ -7,7 +7,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
+ 	LOCAL_C_INCLUDES := \
+ 		$(commands_recovery_local_path)/openaes/src/isaac \
+ 		$(commands_recovery_local_path)/openaes/inc
+-	LOCAL_CFLAGS:= -g -c -W
++	LOCAL_CFLAGS:= -g -c -W -Wno-deprecated-non-prototype
+ 	LOCAL_MODULE:=openaes
+ 	LOCAL_MODULE_TAGS:= optional
+ 	LOCAL_MODULE_CLASS := EXECUTABLES
+@@ -18,6 +18,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
+ 	# Build shared library
+ 	include $(CLEAR_VARS)
+ 	LOCAL_MODULE := libopenaes
++	LOCAL_CFLAGS += -Wno-deprecated-non-prototype
+ 	LOCAL_MODULE_TAGS := optional
+ 	LOCAL_C_INCLUDES := \
+ 		$(commands_recovery_local_path)/openaes/src/isaac \
+@@ -29,6 +30,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
+ 	# Build static library
+ 	include $(CLEAR_VARS)
+ 	LOCAL_MODULE := libopenaes_static
++	LOCAL_CFLAGS += -Wno-deprecated-non-prototype
+ 	LOCAL_MODULE_TAGS := optional
+ 	LOCAL_C_INCLUDES := \
+ 		$(commands_recovery_local_path)/openaes/src/isaac \

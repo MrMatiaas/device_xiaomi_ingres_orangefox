@@ -96,7 +96,22 @@ cd sync
 ./orangefox_sync.sh --branch 14.1 --path ~/fox_14.1
 ```
 
-Place this device tree at `device/xiaomi/ingres` inside that manifest directory, then:
+Place this device tree at `device/xiaomi/ingres` inside that manifest directory, then apply
+the source patches this device needs (re-run after every sync; already-applied patches are
+skipped):
+
+```
+cd ~/fox_14.1
+bash device/xiaomi/ingres/patches/apply.sh
+```
+
+| Patch | Why |
+| ----- | --- |
+| `bootable/recovery/0001-Wipe_Encryption-remove-userdata-dm-device-before-format` | **Format Data** failed with `make_f2fs: Error: In use by the system!`: the metadata-encryption dm device (`/dev/block/mapper/userdata`) still held the raw userdata partition open. Removes it before formatting. |
+| `bootable/recovery/0002-openaes-fix-build-with-clang-deprecated-non-prototype` | Build fix: K&R-style C in openaes is an error with this branch's clang. |
+| `external/se_omapi/0001-Replace-select-cflags-unsupported-by-Android-14-soong` | Build fix: the `twrp-14` manifest pulls se_omapi from a twrp-16.0 revision that uses `select()`, which Android 14 Soong can't parse. |
+
+Then build (from **bash**, not fish/zsh -- `envsetup.sh` is bash-only):
 
 ```
 cd ~/fox_14.1

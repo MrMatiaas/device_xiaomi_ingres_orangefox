@@ -1,0 +1,16 @@
+diff --git a/Android.bp b/Android.bp
+index 7e2790d..8fb99d8 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -10,10 +10,7 @@ cc_binary {
+         "internal/ByteArrayConverter.cpp",
+     ],
+     // This hex value is fetched from /vendor/etc/hal_uuid_map.xml
+-    cflags: select(soong_config_variable("omapi", "uuid"), {
+-        any @ uuid: ["-DUUID_HEXSTRING=\"" + uuid + "\""],
+-        default: ["-DUUID_HEXSTRING=\"534552454144595f48414c5f55554944\""], // STM
+-    }),
++    cflags: ["-DUUID_HEXSTRING=\"534552454144595f48414c5f55554944\""], // STM (select() unsupported by A14 soong)
+     local_include_dirs: ["include"],
+     shared_libs: [
+         "libbase",
