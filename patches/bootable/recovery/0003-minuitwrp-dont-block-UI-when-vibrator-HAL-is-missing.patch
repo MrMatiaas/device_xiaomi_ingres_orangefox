@@ -1,0 +1,15 @@
+diff --git a/minuitwrp/events.cpp b/minuitwrp/events.cpp
+index e497df62..9e987dd6 100644
+--- a/minuitwrp/events.cpp
++++ b/minuitwrp/events.cpp
+@@ -159,7 +159,9 @@ int vibrate(int timeout_ms)
+         vib->on((uint32_t)timeout_ms);
+     }
+ #elif defined(USE_QTI_AIDL_HAPTICS)
+-    std::shared_ptr<IVibrator> vib = IVibrator::fromBinder(ndk::SpAIBinder(AServiceManager_getService(kVibratorInstance.c_str())));
++    // checkService, not getService: getService blocks ~5s per call when the HAL
++    // is missing or crashed, freezing the UI on every vibrating tap.
++    std::shared_ptr<IVibrator> vib = IVibrator::fromBinder(ndk::SpAIBinder(AServiceManager_checkService(kVibratorInstance.c_str())));
+     if (vib != nullptr) {
+ #ifdef USE_QTI_AIDL_HAPTICS_FIX_OFF
+         std::thread([vib, timeout_ms] {

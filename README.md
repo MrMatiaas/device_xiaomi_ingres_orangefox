@@ -109,6 +109,7 @@ bash device/xiaomi/ingres/patches/apply.sh
 | ----- | --- |
 | `bootable/recovery/0001-Wipe_Encryption-remove-userdata-dm-device-before-format` | **Format Data** failed with `make_f2fs: Error: In use by the system!`: the metadata-encryption dm device (`/dev/block/mapper/userdata`) still held the raw userdata partition open. Removes it before formatting. |
 | `bootable/recovery/0002-openaes-fix-build-with-clang-deprecated-non-prototype` | Build fix: K&R-style C in openaes is an error with this branch's clang. |
+| `bootable/recovery/0003-minuitwrp-dont-block-UI-when-vibrator-HAL-is-missing` | `vibrate()` used `AServiceManager_getService()`, which polls for ~5s when the vibrator HAL is absent, so every tap froze the UI for 5+ seconds. Uses the non-blocking `AServiceManager_checkService()` instead. |
 | `external/se_omapi/0001-Replace-select-cflags-unsupported-by-Android-14-soong` | Build fix: the `twrp-14` manifest pulls se_omapi from a twrp-16.0 revision that uses `select()`, which Android 14 Soong can't parse. |
 
 Then build (from **bash**, not fish/zsh -- `envsetup.sh` is bash-only):
