@@ -78,8 +78,14 @@ TARGET_BOOTLOADER_BOARD_NAME := taro
 QCOM_BOARD_PLATFORMS += taro
 
 # Soong namespaces
+# DEVICE_PATH is only defined in BoardConfig.mk (parsed after this file), so
+# use the literal path or the namespace is silently empty.
 PRODUCT_SOONG_NAMESPACES += \
-    $(DEVICE_PATH)
+    device/xiaomi/ingres
+
+# Haptics HAL (see vibrator/Android.bp)
+PRODUCT_PACKAGES += \
+    android.hardware.vibrator-service.ingres
 
 # Suppot to compile recovery without msm headers
 TARGET_HAS_GENERIC_KERNEL_HEADERS := true

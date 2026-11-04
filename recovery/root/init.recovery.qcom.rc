@@ -61,5 +61,58 @@ on property:twrp.modules.loaded=true
     start health-hal-2-1
     umount /firmware
 
+# ---------------------------------------------------------------------------
+# Service definitions that used to live as *local edits* outside this device
+# tree (device/qcom/twrp-common and bootable/recovery/etc/init). A fresh
+# OrangeFox sync doesn't carry those edits, which silently broke /data
+# decryption and OTA installs again. Keep them here so the tree is
+# self-contained.
+# ---------------------------------------------------------------------------
+
+# KeyMint (FBE metadata key unwrap). Upstream twrp-common (android-14) has no
+# KeyMint support at all, so define it here. Uses the real vendor binary +
+# APEX-only -V1-ndk_platform libs bundled in recovery/root/vendor/. `override`
+# keeps this definition even if a (modified) twrp-common also defines one.
+on property:hwservicemanager.ready=true && property:vendor.sys.listeners.registered=true
+    start keymint-qti
+
+service keymint-qti /vendor/bin/hw/android.hardware.security.keymint-service-qti
+    override
+    user root
+    group root
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/system/lib64:/system/lib:/sbin
+    disabled
+    seclabel u:r:recovery:s0
+
+# bootctl HAL for update_engine_sideload / `twrp install` of OTA zips.
+# bootable/recovery's own definition points at the AOSP-compiled
+# /system/bin binary, which exits right away because hwservicemanager rejects
+# its registration. Override it with the real vendor binary, which matches the
+# VINTF fragment in vendor/etc/vintf/manifest/android.hardware.boot@1.2.xml.
+service boot-hal-1-2 /vendor/bin/hw/android.hardware.boot@1.2-service
+    override
+    interface android.hardware.boot@1.0::IBootControl default
+    interface android.hardware.boot@1.1::IBootControl default
+    interface android.hardware.boot@1.2::IBootControl default
+    user root
+    group root
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/system/lib64:/system/lib:/sbin
+    disabled
+    seclabel u:r:recovery:s0
 
 
+
+
+# Haptics: tiny AIDL IVibrator (device/xiaomi/ingres/vibrator) driving the
+# awinic_haptic sysfs node. Replaces Xiaomi's vibratorfeature HAL, which is
+# built for vendor A12 libutils, SIGABRTs under fox_14.1's Android 14 runtime,
+# crash-looped every 5s and stalled the UI on every vibration.
+on boot
+    start vibrator-hal-ingres
+
+service vibrator-hal-ingres /system/bin/android.hardware.vibrator-service.ingres
+    user root
+    group root input
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0

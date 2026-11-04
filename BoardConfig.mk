@@ -11,7 +11,7 @@ DEVICE_PATH := device/xiaomi/ingres
 # are inherited placeholders and MUST be verified against a real ingres stock boot.img/vendor_boot.img
 # and `fastboot getvar all` / partition table dump before flashing. They do not block compilation.
 
-BOARD_SYSTEMSDK_VERSIONS := 31
+# BOARD_SYSTEMSDK_VERSIONS := 31  # removed: breaks soong on fox_14.1 (system_current modules rejected), unused by recovery
 
 # Architecture
 TARGET_ARCH := arm64
@@ -231,9 +231,21 @@ TW_H_OFFSET := -90
 # instead of level with it. Lowering to bring status_info_y close to 0.
 OF_STATUS_H := 56
 
+# OF_SCREEN_H: the theme's virtual height (screen_original_h). Unset, OrangeFox
+# assumes a 16:9 1080x1920 panel, so on this 1080x2400 one the whole theme got
+# stretched ~1.2x vertically (2310/1920). Fixed-height lists sized for tall
+# screens (e.g. Menu -> "Additions", h=%screen_w%-200=880 starting at y~1004)
+# then ran past nav_panel_y (screen_h-360 = 1560 at 1920) and hid under the
+# navbar; since the box still "fit" its 880px it never scrolled. With the real
+# height the theme lays out for 2400 (scale ~0.96 after TW_H_OFFSET) and those
+# lists end above the navbar and scroll normally.
+OF_SCREEN_H := 2400
+
 # TWRP Haptics
 TW_SUPPORT_INPUT_AIDL_HAPTICS := true
 TW_SUPPORT_INPUT_AIDL_HAPTICS_FQNAME := "IVibrator/vibratorfeature"
+# Served by our own HAL (vibrator/), relinked into the ramdisk /system/bin.
+TW_RECOVERY_ADDITIONAL_RELINK_BINARY_FILES += $(TARGET_OUT_EXECUTABLES)/android.hardware.vibrator-service.ingres
 TW_EXCLUDE_TWRPAPP := true
 
 # TWRP Version

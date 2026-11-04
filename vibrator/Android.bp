@@ -1,0 +1,22 @@
+//
+// Minimal AIDL IVibrator HAL for ingres recovery.
+//
+// The stock Xiaomi vibratorfeature HAL is built against vendor A12 (VNDK v31)
+// libutils and aborts under fox_14.1's Android 14 runtime
+// ("incStrongRequireStrong() ... isn't already owned"). It crash-looped every
+// 5s, and every UI vibration blocked recovery waiting for the service.
+// This drives the awinic_haptic sysfs node (duration + activate) directly.
+//
+
+cc_binary {
+    name: "android.hardware.vibrator-service.ingres",
+    // Built as a normal system module (android.hardware.vibrator-V2-ndk has no
+    // recovery variant) and copied into the ramdisk by TWRP's relink step via
+    // TW_RECOVERY_ADDITIONAL_RELINK_BINARY_FILES in BoardConfig.mk.
+    srcs: ["Vibrator.cpp"],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.vibrator-V2-ndk",
+    ],
+}
